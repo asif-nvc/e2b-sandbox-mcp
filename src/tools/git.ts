@@ -169,4 +169,54 @@ export function registerGitTools(server: McpServer): void {
       }
     }
   );
+
+  server.tool(
+    'sandbox_git_pull',
+    'Pull latest changes from a remote repository in a sandbox.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      repoPath: z.string().describe('Path to the git repository.'),
+      remote: z.string().optional().describe('Remote name. Defaults to "origin".'),
+      branch: z.string().optional().describe('Branch to pull. Defaults to current branch.'),
+    },
+    async ({ sandboxId, repoPath, remote, branch }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const opts: { remote?: string; branch?: string } = {};
+        if (remote) opts.remote = remote;
+        if (branch) opts.branch = branch;
+
+        await sandbox.git.pull(repoPath, opts);
+
+        return formatSuccess(JSON.stringify({
+          message: 'Pulled successfully',
+          remote: remote ?? 'origin',
+          branch: branch ?? 'current',
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_git_init',
+    'Initialize a new git repository in a sandbox directory.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      path: z.string().describe('Path where the repository should be initialized.'),
+    },
+    async ({ sandboxId, path }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        await sandbox.git.init(path);
+        return formatSuccess(JSON.stringify({
+          message: 'Repository initialized',
+          path,
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
 }

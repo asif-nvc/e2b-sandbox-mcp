@@ -4,7 +4,7 @@ An MCP (Model Context Protocol) server that connects Claude Code with [E2B](http
 
 ## What It Does
 
-This server provides Claude Code with 18 tools to create cloud sandboxes, clone repos, run commands, manage files, and perform git operations — all in a secure, disposable Linux environment.
+This server provides Claude Code with 29 tools to create cloud sandboxes, clone repos, run commands, manage files, and perform git operations — all in a secure, disposable Linux environment.
 
 **Your local machine stays untouched.** Every operation happens inside an E2B sandbox VM.
 
@@ -28,6 +28,31 @@ Claude Code:
 
 ### Safe Experimentation
 Try risky changes — dependency upgrades, major refactors, migration scripts — in a throwaway environment. If it breaks, `sandbox_kill` and start fresh.
+
+### Persistent Development Sessions
+Pause a sandbox when you're done for the day, resume it tomorrow with all your files and state intact. No more rebuilding environments from scratch.
+
+```
+You: "Pause this sandbox, I'll continue tomorrow"
+
+Claude Code:
+  → sandbox_pause (saves state)
+
+Next day:
+  → sandbox_resume (picks up where you left off)
+```
+
+### Preview Dev Servers
+Start a web app in a sandbox and get a public URL to preview it in your browser — no port forwarding or tunneling needed.
+
+```
+You: "Start the dev server and give me a URL to preview it"
+
+Claude Code:
+  → sandbox_exec_background "npm run dev"
+  → sandbox_get_url 3000
+  → Returns: https://abc123-3000.e2b.dev
+```
 
 ### Multi-Repo Parallel Work
 Spin up multiple sandboxes, clone different repos, work on all of them simultaneously. Each sandbox is fully isolated.
@@ -54,7 +79,7 @@ Clone a PR branch into a sandbox, run the tests, inspect the changes, and verify
 
 ```bash
 # Clone the repo
-git clone https://github.com/IQBal-Hyena/e2b-sandbox-mcp.git
+git clone https://github.com/asif-nvc/e2b-sandbox-mcp.git
 cd e2b-sandbox-mcp
 
 # Install dependencies
@@ -67,25 +92,13 @@ npm run build
 ### 2. Register with Claude Code
 
 ```bash
-claude mcp add e2b-sandbox -- node /path/to/e2b-sandbox-mcp/dist/index.js
+claude mcp add e2b-sandbox -s user \
+  -e E2B_API_KEY=your-e2b-api-key \
+  -e GITHUB_TOKEN=your-github-token \
+  -- node /path/to/e2b-sandbox-mcp/dist/index.js
 ```
 
-Then add your environment variables in `~/.claude/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "e2b-sandbox": {
-      "command": "node",
-      "args": ["/path/to/e2b-sandbox-mcp/dist/index.js"],
-      "env": {
-        "E2B_API_KEY": "your-e2b-api-key",
-        "GITHUB_TOKEN": "your-github-token"
-      }
-    }
-  }
-}
-```
+Restart Claude Code after adding the server.
 
 ### 3. Use It
 
@@ -106,6 +119,16 @@ Claude Code will call the MCP tools automatically.
 | `sandbox_info` | Get details about a specific sandbox |
 | `sandbox_kill` | Terminate and destroy a sandbox |
 | `sandbox_keep_alive` | Extend a sandbox's timeout |
+| `sandbox_pause` | Pause a sandbox, preserving its state for later |
+| `sandbox_resume` | Resume a previously paused sandbox |
+
+### Networking & File Transfer
+
+| Tool | Description |
+|------|-------------|
+| `sandbox_get_url` | Get a public URL for a port (preview dev servers in browser) |
+| `sandbox_upload_url` | Get a presigned URL to upload files to the sandbox |
+| `sandbox_download_url` | Get a presigned URL to download files from the sandbox |
 
 ### Command Execution
 
@@ -113,6 +136,8 @@ Claude Code will call the MCP tools automatically.
 |------|-------------|
 | `sandbox_exec` | Run a shell command and get stdout/stderr/exit code |
 | `sandbox_exec_background` | Start a background process (dev servers, watchers) |
+| `sandbox_process_list` | List all running processes with PIDs |
+| `sandbox_process_kill` | Kill a running process by PID |
 
 ### File Operations
 
@@ -124,6 +149,8 @@ Claude Code will call the MCP tools automatically.
 | `sandbox_file_mkdir` | Create a directory |
 | `sandbox_file_remove` | Delete a file or directory |
 | `sandbox_file_info` | Get file metadata (size, type, permissions) |
+| `sandbox_file_exists` | Check if a file or directory exists |
+| `sandbox_file_rename` | Rename or move a file or directory |
 
 ### Git Operations
 
@@ -133,7 +160,9 @@ Claude Code will call the MCP tools automatically.
 | `sandbox_git_status` | Get working tree status |
 | `sandbox_git_commit` | Stage files and commit |
 | `sandbox_git_push` | Push commits to remote |
+| `sandbox_git_pull` | Pull latest changes from remote |
 | `sandbox_git_branch` | List, create, or switch branches |
+| `sandbox_git_init` | Initialize a new git repository |
 
 ## Environment Variables
 

@@ -18,15 +18,10 @@ registerFilesystemTools(server);
 registerGitTools(server);
 
 async function main() {
-  if (!process.env.E2B_API_KEY) {
-    console.error('[ERROR] E2B_API_KEY environment variable is required.');
-    console.error('Get your API key at https://e2b.dev/dashboard');
-    process.exit(1);
-  }
-
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('[INFO] E2B Sandbox MCP Server running on stdio');
+  console.error(`[INFO] E2B API key: ${process.env.E2B_API_KEY ? 'configured' : 'NOT SET — sandbox_create will fail'}`);
   console.error(`[INFO] GitHub auth: ${process.env.GITHUB_TOKEN ? 'configured' : 'not configured'}`);
 }
 

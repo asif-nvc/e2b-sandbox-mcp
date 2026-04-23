@@ -69,4 +69,54 @@ export function registerCommandTools(server: McpServer): void {
       }
     }
   );
+
+  server.tool(
+    'sandbox_process_list',
+    'List all running processes (commands and PTY sessions) in a sandbox. Shows PID, command, and arguments for each process.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+    },
+    async ({ sandboxId }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const processes = await sandbox.commands.list();
+
+        if (processes.length === 0) {
+          return formatSuccess('No running processes.');
+        }
+
+        const formatted = processes.map(p => ({
+          pid: p.pid,
+          command: p.cmd,
+          args: p.args,
+          tag: p.tag,
+        }));
+
+        return formatSuccess(JSON.stringify(formatted, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_process_kill',
+    'Kill a running process in a sandbox by its PID. Use sandbox_process_list to find the PID.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      pid: z.number().describe('Process ID to kill. Get PIDs from sandbox_process_list.'),
+    },
+    async ({ sandboxId, pid }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const killed = await sandbox.commands.kill(pid);
+        if (killed) {
+          return formatSuccess(`Process ${pid} killed successfully.`);
+        }
+        return formatError(new Error(`Process ${pid} not found.`));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
 }

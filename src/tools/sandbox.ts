@@ -95,4 +95,112 @@ export function registerSandboxTools(server: McpServer): void {
       }
     }
   );
+
+  server.tool(
+    'sandbox_pause',
+    'Pause a sandbox to preserve its state. The sandbox can be resumed later with sandbox_resume using the same sandbox ID. Paused sandboxes persist across sessions and do not count against timeout.',
+    {
+      sandboxId: z.string().describe('The sandbox ID to pause.'),
+    },
+    async ({ sandboxId }) => {
+      try {
+        await sandboxManager.pause(sandboxId);
+        return formatSuccess(JSON.stringify({
+          message: 'Sandbox paused successfully',
+          sandboxId,
+          hint: 'Use sandbox_resume with this sandboxId to resume later.',
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_resume',
+    'Resume a previously paused sandbox. Reconnects to the sandbox and restores its state including filesystem and running processes.',
+    {
+      sandboxId: z.string().describe('The sandbox ID of the paused sandbox to resume.'),
+      timeoutMs: z.number().optional().describe('New timeout in milliseconds after resuming. Default: 300000 (5 min).'),
+    },
+    async ({ sandboxId, timeoutMs }) => {
+      try {
+        const info = await sandboxManager.resume(sandboxId, timeoutMs);
+        return formatSuccess(JSON.stringify({
+          message: 'Sandbox resumed successfully',
+          sandboxId: info.sandboxId,
+          gitAuth: process.env.GITHUB_TOKEN ? 'configured' : 'not configured',
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_get_url',
+    'Get the public URL for a port running inside a sandbox. Use this to access dev servers, web apps, or any HTTP service running in the sandbox from a browser.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      port: z.number().describe('The port number the service is listening on inside the sandbox (e.g., 3000, 8080).'),
+    },
+    async ({ sandboxId, port }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const host = sandbox.getHost(port);
+        return formatSuccess(JSON.stringify({
+          url: `https://${host}`,
+          host,
+          port,
+          hint: 'Open this URL in a browser to access the service.',
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_upload_url',
+    'Get a presigned URL to upload a file to the sandbox. Send a POST request with the file as multipart/form-data to the returned URL.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      path: z.string().optional().describe('Destination path inside the sandbox. Defaults to /home/user.'),
+    },
+    async ({ sandboxId, path }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const url = await sandbox.uploadUrl(path);
+        return formatSuccess(JSON.stringify({
+          uploadUrl: url,
+          destinationPath: path ?? '/home/user',
+          hint: 'POST a file as multipart/form-data to this URL.',
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_download_url',
+    'Get a presigned URL to download a file from the sandbox. Use this to retrieve build artifacts, logs, or any file from the sandbox.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      path: z.string().describe('Absolute path to the file inside the sandbox to download.'),
+    },
+    async ({ sandboxId, path }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const url = await sandbox.downloadUrl(path);
+        return formatSuccess(JSON.stringify({
+          downloadUrl: url,
+          filePath: path,
+          hint: 'Open this URL or use curl/wget to download the file.',
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
 }

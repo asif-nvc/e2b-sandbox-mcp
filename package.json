@@ -5,16 +5,40 @@
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "e2b-sandbox-mcp": "./dist/index.js"
+    "e2b-sandbox-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js"
+    "dev": "tsc && node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
+  "keywords": [
+    "mcp",
+    "e2b",
+    "sandbox",
+    "claude",
+    "claude-code",
+    "model-context-protocol",
+    "ai",
+    "github",
+    "cloud-sandbox",
+    "code-execution"
+  ],
+  "author": "asif-nvc",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asif-nvc/e2b-sandbox-mcp.git"
+  },
+  "homepage": "https://github.com/asif-nvc/e2b-sandbox-mcp#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.0",
     "e2b": "^2.14.1",

@@ -123,4 +123,46 @@ export function registerFilesystemTools(server: McpServer): void {
       }
     }
   );
+
+  server.tool(
+    'sandbox_file_exists',
+    'Check if a file or directory exists in a sandbox. Returns true/false without throwing an error if not found.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      path: z.string().describe('Absolute path to check.'),
+    },
+    async ({ sandboxId, path }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const exists = await sandbox.files.exists(path);
+        return formatSuccess(JSON.stringify({ path, exists }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  server.tool(
+    'sandbox_file_rename',
+    'Rename or move a file or directory in a sandbox.',
+    {
+      sandboxId: z.string().describe('The sandbox ID.'),
+      oldPath: z.string().describe('Current absolute path of the file or directory.'),
+      newPath: z.string().describe('New absolute path for the file or directory.'),
+    },
+    async ({ sandboxId, oldPath, newPath }) => {
+      try {
+        const sandbox = sandboxManager.get(sandboxId);
+        const result = await sandbox.files.rename(oldPath, newPath);
+        return formatSuccess(JSON.stringify({
+          message: 'Renamed successfully',
+          from: oldPath,
+          to: newPath,
+          type: result.type,
+        }, null, 2));
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
 }
