@@ -1,5 +1,8 @@
 # E2B Sandbox MCP Server
 
+[![npm version](https://img.shields.io/npm/v/e2b-sandbox-mcp.svg)](https://www.npmjs.com/package/e2b-sandbox-mcp)
+[![license](https://img.shields.io/npm/l/e2b-sandbox-mcp.svg)](https://github.com/asif-nvc/e2b-sandbox-mcp/blob/main/LICENSE)
+
 An MCP (Model Context Protocol) server that connects Claude Code with [E2B](https://e2b.dev) cloud sandboxes, giving you isolated Linux VMs to work on any GitHub repository without touching your local machine.
 
 ## What It Does
@@ -7,6 +10,18 @@ An MCP (Model Context Protocol) server that connects Claude Code with [E2B](http
 This server provides Claude Code with 29 tools to create cloud sandboxes, clone repos, run commands, manage files, and perform git operations — all in a secure, disposable Linux environment.
 
 **Your local machine stays untouched.** Every operation happens inside an E2B sandbox VM.
+
+## Token Savings
+
+Running commands through E2B sandboxes instead of local Bash reduces the tokens consumed per conversation. Tool outputs are structured and truncated (100KB per stream, 200KB total), so large build/test outputs don't flood your context window.
+
+| Project Size | Example | Local Bash Tokens | E2B Sandbox Tokens | Savings |
+|---|---|---|---|---|
+| **Small** | Express API, ~10 files | ~15K-25K | ~10K-18K | ~20-30% |
+| **Medium** | Next.js app, 50-100 files | ~50K-100K | ~25K-45K | ~40-55% |
+| **Large** | Monorepo, 500+ files | ~200K-500K+ | ~60K-120K | ~60-75% |
+
+**Why it scales:** A local `npm install` on a monorepo can dump 10K+ lines into context. A full test suite adds thousands more. With E2B, those outputs are capped and structured. Background processes (`sandbox_exec_background`) return only a process ID — zero streaming output. Directory listings are capped at 1000 entries. The result: your context window stays available for actual work instead of being consumed by terminal noise.
 
 ## Use Cases
 
@@ -75,32 +90,36 @@ Clone a PR branch into a sandbox, run the tests, inspect the changes, and verify
 - [E2B API key](https://e2b.dev/dashboard) (free tier available)
 - [GitHub Personal Access Token](https://github.com/settings/tokens) (optional, for private repos and push)
 
-### 1. Install
+### 1. Register with Claude Code
 
-```bash
-# Clone the repo
-git clone https://github.com/asif-nvc/e2b-sandbox-mcp.git
-cd e2b-sandbox-mcp
-
-# Install dependencies
-npm install
-
-# Build
-npm run build
-```
-
-### 2. Register with Claude Code
+No separate install needed — just point Claude Code at the npm package with `npx`:
 
 ```bash
 claude mcp add e2b-sandbox -s user \
   -e E2B_API_KEY=your-e2b-api-key \
   -e GITHUB_TOKEN=your-github-token \
-  -- node /path/to/e2b-sandbox-mcp/dist/index.js
+  -- npx -y e2b-sandbox-mcp
 ```
 
 Restart Claude Code after adding the server.
 
-### 3. Use It
+<details>
+<summary>Alternative: global install</summary>
+
+If you prefer a global install instead of `npx`:
+
+```bash
+npm install -g e2b-sandbox-mcp
+
+claude mcp add e2b-sandbox -s user \
+  -e E2B_API_KEY=your-e2b-api-key \
+  -e GITHUB_TOKEN=your-github-token \
+  -- e2b-sandbox-mcp
+```
+
+</details>
+
+### 2. Use It
 
 Start Claude Code and ask it to work on any repo:
 
