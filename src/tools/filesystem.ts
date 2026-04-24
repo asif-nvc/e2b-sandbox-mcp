@@ -90,10 +90,10 @@ export function registerFilesystemTools(server: McpServer): void {
 
   server.tool(
     'sandbox_file_remove',
-    'Delete a file or directory in a sandbox.',
+    'Permanently and irreversibly delete a file or directory in a sandbox. Directories are removed recursively including all contents. This operation cannot be undone — there is no trash or recycle bin. Fails with an error if the path does not exist. Use sandbox_file_exists to check before deleting if uncertain. Unlike sandbox_exec with "rm", this tool provides structured error reporting. For moving files instead of deleting, use sandbox_file_rename.',
     {
-      sandboxId: z.string().describe('The sandbox ID.'),
-      path: z.string().describe('Absolute path of the file or directory to delete.'),
+      sandboxId: z.string().describe('The sandbox ID containing the file or directory.'),
+      path: z.string().describe('Absolute path of the file or directory to delete (e.g., "/home/user/repo/old-file.txt"). Must exist or the operation will fail.'),
     },
     async ({ sandboxId, path }) => {
       try {

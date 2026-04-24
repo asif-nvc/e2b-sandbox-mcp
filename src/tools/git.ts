@@ -172,12 +172,12 @@ export function registerGitTools(server: McpServer): void {
 
   server.tool(
     'sandbox_git_pull',
-    'Pull latest changes from a remote repository in a sandbox.',
+    'Fetch and merge latest changes from a remote into the current branch of a sandbox repository. Modifies the working directory and may cause merge conflicts if local changes overlap with remote changes. Requires a previously cloned repository (use sandbox_git_clone first). Unlike sandbox_git_clone (initial download) or sandbox_git_push (upload changes), this tool updates an existing local repo with remote changes. Returns the remote and branch that were pulled. Fails if the path is not a git repository or the remote is unreachable.',
     {
-      sandboxId: z.string().describe('The sandbox ID.'),
-      repoPath: z.string().describe('Path to the git repository.'),
-      remote: z.string().optional().describe('Remote name. Defaults to "origin".'),
-      branch: z.string().optional().describe('Branch to pull. Defaults to current branch.'),
+      sandboxId: z.string().describe('The sandbox ID containing the repository.'),
+      repoPath: z.string().describe('Absolute path to an existing git repository in the sandbox (e.g., "/home/user/repo"). Must already be initialized via sandbox_git_clone or sandbox_git_init.'),
+      remote: z.string().optional().describe('Remote name to pull from. Defaults to "origin". Use sandbox_git_branch to verify available remotes.'),
+      branch: z.string().optional().describe('Branch to pull. Defaults to the currently checked-out branch. Use sandbox_git_branch with action "list" to see available branches.'),
     },
     async ({ sandboxId, repoPath, remote, branch }) => {
       try {
