@@ -1,6 +1,6 @@
 {
   "name": "e2b-sandbox-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server connecting Claude Code with E2B cloud sandboxes for working on any GitHub repo",
   "type": "module",
   "main": "./dist/index.js",
